@@ -1,6 +1,7 @@
 let canvas;
 let contexto;
 let protagonista;
+let tileMap;
 
 const fps=50;
 const anchoF = 40;
@@ -9,6 +10,9 @@ const cesped = '#8BDA20';
 const puerta = 'brown';
 const tierra = '#C69E0A';
 const llave = 'gold'
+
+
+const enemigo =[]
 
 
 
@@ -27,39 +31,95 @@ const escenario = [
   ];
 
 const posicionesRandom =()=>{
-    let randomposicion= [];
+    let randomArray= [];
     for (let x = 0; x < escenario.length; x++) {
         for (let y = 0; y < escenario[x].length; y++) { 
             if(escenario[x][y]===2){
-                randomposicion.push(`${x},${y}`)
+                randomArray.push([x,y])
             }
              
         }    
     }
-    return (randomposicion);
+    return (randomArray);
 }
 
 
 const dibujaEscenario = () => {
-    let color;
+
     for (let x = 0; x < escenario.length; x++) {
         for (let y = 0; y < escenario[x].length; y++) {
-            if(escenario[x][y]===0){
-                color= cesped;
-            }           
-            if(escenario[x][y]===1){
-                color= puerta;
-            }           
-            if(escenario[x][y]===2){
-                color = tierra;
-            }   
-            if(escenario[x][y]===3){
-                color = llave;
-            }
-            contexto.fillStyle =color;      
-            contexto.fillRect(x*anchoF, y* altoF, anchoF, altoF )  
+            let tile = escenario[x][y];
+
+            contexto.drawImage(tileMap, tile*32,0,32,32,anchoF*x,altoF*y,anchoF,altoF);
+
+
+
+            // contexto.fillStyle =color;      
+            // contexto.fillRect(x*anchoF, y* altoF, anchoF, altoF )  
         }    
     }
+}
+
+
+const villano = function(x,y){
+    this.x =x;
+    this.y=y;
+    this.direccion = Math.floor(Math.random()*4);
+
+    this.dibuja = ()=>{
+        contexto.drawImage(tileMap,0,32,32,32,anchoF*this.x,altoF*this.y,anchoF,altoF);
+    }
+
+    this.retraso= 50;
+    this.fotograma = 0;
+    this.contador =0;
+
+    this.compruebaColision =(x,y)=> escenario[x][y]===0;
+
+    
+    this.mueve =()=>{
+        protagonista.colisionEnemigo(this.x,this.y);
+        if(this.contador < this.retraso){
+            this.contador++;
+        }else{
+            this.contador=0;
+            //movimiento hacia arriba
+            if(this.direccion ===0){
+                if(this.compruebaColision(this.x,this.y-1)===false){
+                    this.y--;
+                }else{
+                    this.direccion = Math.floor(Math.random()*4);
+                }
+            }
+            //movimiento hacia abajo
+            if(this.direccion ===1){
+                if(this.compruebaColision(this.x,this.y+1)===false){
+                    this.y++;
+                }else{
+                    this.direccion = Math.floor(Math.random()*4);
+                }
+            }
+            //movimiento hacia la izquierda
+            if(this.direccion ===2){
+                if(this.compruebaColision(this.x-1,this.y)===false){
+                    this.x--;
+                }else{
+                    this.direccion = Math.floor(Math.random()*4);
+                }
+            }
+            //movimiento hacia la derecha
+            if(this.direccion ===3){
+                if(this.compruebaColision(this.x+1,this.y)===false){
+                    this.x++;
+                }else{
+                    this.direccion = Math.floor(Math.random()*4);
+                }
+            }
+
+        }
+    }
+
+
 }
 
 // OBJETO JUGADOR
@@ -73,8 +133,19 @@ const jugador = function(){
     this.margenes = (x,y)=>escenario[x][y]===0;
 
     this.dibuja = ()=>{
-        contexto.fillStyle = this.color;
-        contexto.fillRect(this.x * anchoF, this.y * altoF, anchoF, altoF)
+
+        contexto.drawImage(tileMap,32,32,32,32,anchoF*this.x,altoF*this.y,anchoF,altoF);
+
+
+
+        // contexto.fillStyle = this.color;
+        // contexto.fillRect(this.x * anchoF, this.y * altoF, anchoF, altoF)
+    }
+    this.colisionEnemigo =(x,y)=>{
+        if(this.x === x && this.y ===y){
+            console.log('has muerto')
+            this.muerte()
+        }
     }
 
     this.arriba = ()=>{
@@ -105,15 +176,22 @@ const jugador = function(){
     this.victoria = ()=>{
         console.log('has ganado la partida');
         const posiciones = posicionesRandom();
-        const posicionString =posiciones[Math.floor(Math.random()*(0+53))+0];
-        const llavepossicion = posicionString.split(',');
+        const randomIndices = posiciones[Math.floor(Math.random()*(0+53))];
         this.x =1 ;
         this.y =1;
-        this.xllave=parseInt(llavepossicion[0]);
-        this.yllave=parseInt(llavepossicion[1]);
+        this.xllave=parseInt(randomIndices[0]);
+        this.yllave=parseInt(randomIndices[1]);
         this.llave = false;
         escenario[this.x][this.y]= 2;
         escenario[this.xllave][this.yllave]=3;
+    }
+    this.muerte = ()=>{
+        console.log('has muerto');
+        this.x =1 ;
+        this.y =1;
+        this.llave = false;
+        escenario[this.x][this.y]= 2;
+        escenario[8][3]=3;
     }
 
     this.logicaObjetos=()=>{
@@ -151,7 +229,14 @@ const inicializa=()=>{
     
     canvas = document.getElementById('canvas');
     contexto = canvas.getContext('2d');
+    // cargar imagen
+    tileMap = new Image();
+    tileMap.src = './image/tilemap.png'   
     
+    //creacion de los enemigos
+    enemigo.push(new villano(3,3));
+    enemigo.push(new villano(7,5));
+    enemigo.push(new villano(7,7));
     // creacion del jugador
     protagonista = new jugador();
 
@@ -190,5 +275,10 @@ const principal =()=>{
     borraCanvas();
     dibujaEscenario();
     protagonista.dibuja();
+
+    for(let i=0; i< enemigo.length; i++){
+        enemigo[i].mueve();
+        enemigo[i].dibuja();
+    }
 }
 
