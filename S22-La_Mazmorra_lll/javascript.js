@@ -61,23 +61,29 @@ const dibujaEscenario = () => {
 }
 
 
-const villano = function(x,y){
-    this.x =x;
-    this.y=y;
-    this.direccion = Math.floor(Math.random()*4);
 
-    this.dibuja = ()=>{
+class Villano{
+
+    constructor(x,y) {
+        this.x =x;
+        this.y=y;
+        this.direccion = Math.floor(Math.random() * 4);
+        this.retraso= 50;
+        this.fotograma = 0;
+        this.contador =0;
+    }
+    
+
+    dibuja = ()=>{
         contexto.drawImage(tileMap,0,32,32,32,anchoF*this.x,altoF*this.y,anchoF,altoF);
     }
 
-    this.retraso= 50;
-    this.fotograma = 0;
-    this.contador =0;
 
-    this.compruebaColision =(x,y)=> escenario[x][y]===0;
+
+    compruebaColision =(x,y)=> escenario[x][y]===0;
 
     
-    this.mueve =()=>{
+    mueve =()=>{
         protagonista.colisionEnemigo(this.x,this.y);
         if(this.contador < this.retraso){
             this.contador++;
@@ -123,16 +129,19 @@ const villano = function(x,y){
 }
 
 // OBJETO JUGADOR
-const jugador = function(){
-    this.x =1;
-    this.y = 1;
-    this.color = 'red';
-    this.llave = false;
+class Jugador{
+    
+    
+    constructor(){
+        this.x =1;
+        this.y = 1;
+        this.color = 'red';
+        this.llave = false;
+    }
 
+    margenes = (x,y)=>escenario[x][y]===0;
 
-    this.margenes = (x,y)=>escenario[x][y]===0;
-
-    this.dibuja = ()=>{
+    dibuja = ()=>{
 
         contexto.drawImage(tileMap,32,32,32,32,anchoF*this.x,altoF*this.y,anchoF,altoF);
 
@@ -141,39 +150,39 @@ const jugador = function(){
         // contexto.fillStyle = this.color;
         // contexto.fillRect(this.x * anchoF, this.y * altoF, anchoF, altoF)
     }
-    this.colisionEnemigo =(x,y)=>{
+    colisionEnemigo =(x,y)=>{
         if(this.x === x && this.y ===y){
             console.log('has muerto')
             this.muerte()
         }
     }
 
-    this.arriba = ()=>{
+    arriba = ()=>{
         if(!this.margenes(this.x,this.y-1)){
             this.y--;
             this.logicaObjetos();
         }
     }
-    this.abajo = ()=>{
+    abajo = ()=>{
         if(!this.margenes(this.x,this.y+1)){
             this.y++;
             this.logicaObjetos();
         }
     }
-    this.izquierda = ()=>{
+    izquierda = ()=>{
         if(!this.margenes(this.x-1,this.y)){
             this.x--;
             this.logicaObjetos();
         }
     }
-    this.derecha = ()=>{
+    derecha = ()=>{
         if(!this.margenes(this.x+1,this.y)){
             this.x++;
             this.logicaObjetos();
         }
     }
 
-    this.victoria = ()=>{
+    victoria = ()=>{
         console.log('has ganado la partida');
         const posiciones = posicionesRandom();
         const randomIndices = posiciones[Math.floor(Math.random()*(0+53))];
@@ -185,7 +194,7 @@ const jugador = function(){
         escenario[this.x][this.y]= 2;
         escenario[this.xllave][this.yllave]=3;
     }
-    this.muerte = ()=>{
+    muerte = ()=>{
         console.log('has muerto');
         this.x =1 ;
         this.y =1;
@@ -194,7 +203,7 @@ const jugador = function(){
         escenario[8][3]=3;
     }
 
-    this.logicaObjetos=()=>{
+    logicaObjetos=()=>{
         let objeto = escenario[this.x][this.y];
 
         // obtencion de la llave
@@ -234,11 +243,11 @@ const inicializa=()=>{
     tileMap.src = './image/tilemap.png'   
     
     //creacion de los enemigos
-    enemigo.push(new villano(3,3));
-    enemigo.push(new villano(7,5));
-    enemigo.push(new villano(7,7));
+    enemigo.push(new Villano(3,3));
+    enemigo.push(new Villano(7,5));
+    enemigo.push(new Villano(7,7));
     // creacion del jugador
-    protagonista = new jugador();
+    protagonista = new Jugador();
 
     document.addEventListener('keydown',tecla=>{
         switch (tecla.code) {
